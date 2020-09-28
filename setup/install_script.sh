@@ -60,7 +60,7 @@ turnoff_selinux(){
 # Todo App User
 todoapp_user_setup(){
     	echo "Creating Todo App User"
-	useradd -m -r todo_app && passwd -l todo_app
+	useradd -m -r todoapp && passwd -l todoapp
 }
 
 # Enable & Start Mongo
