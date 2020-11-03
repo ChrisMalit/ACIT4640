@@ -18,6 +18,7 @@ Vagrant.configure("2") do |config|
     todohttp.vm.provision "file", source: "./files/nginx.conf", destination: "/home/admin/nginx.conf"
     todohttp.vm.provision "file", source: "files/install_todoapp.sh", destination: "/tmp/install_todoapp.sh"
     todohttp.vm.provision "shell", inline: <<-SHELL
+      curl -sL https://rpm.nodesource.com/setup_14.x | sudo bash -
       dnf install -y nginx git nodejs
       mv /home/admin/nginx.conf /etc/nginx/nginx.conf
 
