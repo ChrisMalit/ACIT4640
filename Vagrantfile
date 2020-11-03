@@ -16,9 +16,14 @@ Vagrant.configure("2") do |config|
     todohttp.vm.network "private_network", ip: "192.168.150.10"
     todohttp.vm.network "forwarded_port", guest: 80, host: 12080
     todohttp.vm.provision "file", source: "./files/nginx.conf", destination: "/home/admin/nginx.conf"
+    todohttp.vm.provision "file", source: "files/install_todoapp.sh", destination: "/tmp/install_todoapp.sh"
     todohttp.vm.provision "shell", inline: <<-SHELL
-      dnf install -y nginx
+      dnf install -y nginx git nodejs
       mv /home/admin/nginx.conf /etc/nginx/nginx.conf
+
+      useradd todoapp
+      sudo -u todoapp bash /tmp/install_todoapp.sh
+
       systemctl enable nginx
       systemctl restart nginx
     SHELL
