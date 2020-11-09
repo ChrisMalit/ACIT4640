@@ -1,0 +1,50 @@
+---
+- hosts: todoapp
+  vars:
+    todoapp_user_name: todoapp
+    web_app_repository: https://github.com/timoguic/ACIT4640-todo-app.git
+  tasks:
+    - name: Copying install_todoapp.sh Installer
+      become: true
+      copy:
+        src: files/install_todoapp.sh
+        dest: /tmp/install_todoapp.sh
+    - name: Opening Port (8080)
+      become: true
+      shell: "firewall-cmd --zone=public --add-port=8080/tcp"
+    - name: Saving Port Changes
+      become: true
+      shell: "firewall-cmd --runtime-to-permanent"
+    - name: Importing NodeJS Source
+      become: true
+      shell: "curl -sL https://rpm.nodesource.com/setup_14.x | sudo bash -"
+    - name: Installing Packages
+      become: true
+      package:
+        name: "{{item}}"
+        state: present
+      with_items:
+        - git
+        - nodejs
+    - name: Creating Todoapp user
+      become: true
+      user:
+        name: "{{todoapp_user_name}}"
+    - name: Running Todoapp Installer
+      become: true
+      shell: "-u {{todoapp_user_name}} bash /tmp/install_todoapp.sh"
+    - name: Copying Todoapp Service
+      become: true
+      template:
+        src: templates/service.j2
+        dest: /etc/systemd/system/{{ todoapp_user_name }}.service
+    - name: Reloading daemons
+      become: true
+      systemd:
+        daemon_reload: yes
+    - name: Enable + Starting todoapp
+      become: true
+      service:
+        name: todoapp
+        enabled: yes
+        state: started

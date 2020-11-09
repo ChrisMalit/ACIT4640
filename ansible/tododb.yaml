@@ -1,0 +1,49 @@
+---
+- hosts: tododb
+  vars:
+    todoapp_user_name: todoapp
+    web_app_repository: https://github.com/timoguic/ACIT4640-todo-app.git
+  tasks:
+    - name: Copying Mongodb Repo
+      become: true
+      copy:
+        src: files/mongorepo.txt
+        dest: /etc/yum.repos.d/mongodb-org-4.4.repo
+    - name: Opening MongoDB Port (27017)
+      become: true
+      shell: "firewall-cmd --zone=public --add-port=27017/tcp"
+    - name: Saving Port Changes
+      become: true
+      shell: "firewall-cmd --runtime-to-permanent"
+    - name: Installing Packages
+      become: true
+      package:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - mongodb-org
+        - tar
+    - name: Copying MongoDB data (TAR)
+      become: true
+      shell: "curl -u student:BCIT2020 https://acit4640.y.vu/docs/module06/resources/mongodb_ACIT4640.tgz --output /tmp/myfile.tgz"
+    - name: Enabling + Starting MongoDB
+      become: true
+      service:
+        name: mongod
+        enabled: yes
+        state: started
+    - name: Configuring Mongod.Configuring
+      become: true
+      shell: "sed -i -e 's/127.0.0.1/0.0.0.0/' '/etc/mongod.conf'"
+    - name: Restarting MongoDB service
+      become: true
+      service:
+        name: mongod
+        state: restarted
+    - name: Extracting MongoDB Data (TAR)
+      become: true
+      shell: "tar zxf /tmp/myfile.tgz -C /home/admin"
+    - name: Restoring MongoDB data
+      become: true
+      shell: "mongorestore -d acit4640 /home/admin/ACIT4640"
+    
