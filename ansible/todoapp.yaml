@@ -32,7 +32,7 @@
         name: "{{todoapp_user_name}}"
     - name: Running Todoapp Installer
       become: true
-      shell: "-u {{todoapp_user_name}} bash /tmp/install_todoapp.sh"
+      shell: "sudo -u {{todoapp_user_name}} bash /tmp/install_todoapp.sh"
     - name: Copying Todoapp Service
       become: true
       template:
