@@ -36,12 +36,9 @@
         name: mongod
         enabled: yes
         state: started
-    - name: Configuring Mongod
+    - name: Configuring Mongod.Configuring
       become: true
-      replace:
-        path: /etc/mongod.conf
-        regexp: "bindIp: 127.0.0.1"
-        replace: "bindIp: 0.0.0.0"
+      shell: "sed -i -e 's/127.0.0.1/0.0.0.0/' '/etc/mongod.conf'"
     - name: Restarting MongoDB service
       become: true
       service:
