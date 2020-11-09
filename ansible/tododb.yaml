@@ -24,8 +24,12 @@
         - mongodb-org
         - tar
     - name: Copying MongoDB data (TAR)
-      become: true
-      shell: "curl -u student:BCIT2020 https://acit4640.y.vu/docs/module06/resources/mongodb_ACIT4640.tgz --output /tmp/myfile.tgz"
+      become_user: admin
+      get_url:
+        url: https://acit4640.y.vu/docs/module06/resources/mongodb_ACIT4640.tgz
+        dest: /tmp/myfile.tgz
+        username: student
+        password: BCIT2020
     - name: Enabling + Starting MongoDB
       become: true
       service:
@@ -45,7 +49,10 @@
         state: restarted
     - name: Extracting MongoDB Data (TAR)
       become: true
-      shell: "tar zxf /tmp/myfile.tgz -C /home/admin"
+      unarchive:
+        remote_src: yes
+        src: /tmp/myfile.tgz
+        dest: /home/admin
     - name: Restoring MongoDB data
       become: true
       shell: "mongorestore -d acit4640 /home/admin/ACIT4640"
