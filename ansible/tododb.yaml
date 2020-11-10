@@ -18,12 +18,13 @@
     - name: Installing Packages
       become: true
       package:
-        name: "{{ item }}"
+        name: "{{item}}"
         state: present
       with_items:
         - mongodb-org
         - tar
     - name: Copying MongoDB data (TAR)
+      become_user: admin
       become_user: admin
       get_url:
         url: https://acit4640.y.vu/docs/module06/resources/mongodb_ACIT4640.tgz
@@ -38,7 +39,10 @@
         state: started
     - name: Configuring Mongod.Configuring
       become: true
-      shell: "sed -i -e 's/127.0.0.1/0.0.0.0/' '/etc/mongod.conf'"
+      replace:
+        path: /etc/mongod.conf
+        regexp: "bindIp: 127.0.0.1"
+        replace: "bindIp: 0.0.0.0"
     - name: Restarting MongoDB service
       become: true
       service:
@@ -46,10 +50,7 @@
         state: restarted
     - name: Extracting MongoDB Data (TAR)
       become: true
-      unarchive:
-        remote_src: yes
-        src: /tmp/myfile.tgz
-        dest: /home/admin
+      shell: "tar zxf /tmp/myfile.tgz -C /home/admin"
     - name: Restoring MongoDB data
       become: true
       shell: "mongorestore -d acit4640 /home/admin/ACIT4640"
