@@ -1,57 +1,50 @@
 ---
 - hosts: tododb
+  become: yes
   vars:
     todoapp_user_name: todoapp
-    web_app_repository: https://github.com/timoguic/ACIT4640-todo-app.git
   tasks:
-    - name: Copying Mongodb Repo
-      become: true
+    - name: Importing MongoDB Repository
       copy:
-        src: files/mongorepo.txt
+        src: mongorepo.txt
         dest: /etc/yum.repos.d/mongodb-org-4.4.repo
-    - name: Opening MongoDB Port (27017)
-      become: true
-      shell: "firewall-cmd --zone=public --add-port=27017/tcp"
-    - name: Saving Port Changes
-      become: true
-      shell: "firewall-cmd --runtime-to-permanent"
-    - name: Installing Packages
-      become: true
+    - name: Verifying Installation of required Packages
       package:
-        name: "{{item}}"
+        name: "{{ item }}"
         state: present
       with_items:
-        - mongodb-org
         - tar
-    - name: Copying MongoDB data (TAR)
-      become_user: admin
-      become_user: admin
-      get_url:
-        url: https://acit4640.y.vu/docs/module06/resources/mongodb_ACIT4640.tgz
-        dest: /tmp/myfile.tgz
-        username: student
-        password: BCIT2020
-    - name: Enabling + Starting MongoDB
-      become: true
-      service:
-        name: mongod
-        enabled: yes
-        state: started
-    - name: Configuring Mongod.Configuring
-      become: true
+        - mongodb-org
+    - name: Allowing Mongo to listen on all interfaces
       replace:
         path: /etc/mongod.conf
         regexp: "bindIp: 127.0.0.1"
         replace: "bindIp: 0.0.0.0"
-    - name: Restarting MongoDB service
-      become: true
-      service:
+    - name: Enable & Start MongoDB
+      systemd:
         name: mongod
-        state: restarted
-    - name: Extracting MongoDB Data (TAR)
-      become: true
-      shell: "tar zxf /tmp/myfile.tgz -C /home/admin"
-    - name: Restoring MongoDB data
-      become: true
-      shell: "mongorestore -d acit4640 /home/admin/ACIT4640"
-    
+        enabled: yes
+        state: started
+    - name: Downloading MongoDB Pre-Loaded Data
+      get_url: 
+        url: https://acit4640.y.vu/docs/module06/resources/mongodb_ACIT4640.tgz
+        dest: /tmp/mongod_export.tgz
+        username: student
+        password: BCIT2020
+      register: download_mongo_export
+    - name: Extracting Data
+      when: download_mongo_export.changed
+      unarchive:
+        remote_src: yes
+        src: /tmp/mongod_export.tgz
+        dest: /tmp
+      register: unpack_mongo_data
+    - name: Import Pre-Load Data
+      when: unpack_mongo_data.changed
+      shell: mongorestore -d ACIT4640 /tmp/ACIT4640
+    - name: Opening MongoDB Port (27017)
+      firewalld:
+        port: 27017/tcp
+        state: enabled
+        permanent: yes
+        immediate: yes
